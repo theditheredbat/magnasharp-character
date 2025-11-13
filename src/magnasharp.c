@@ -18,11 +18,28 @@ render_gradient(struct back_buffer *buf, int xOffset, int yOffset)
 }
 
 void
-update_and_render(struct back_buffer *buf)
+update_and_render(struct back_buffer *buf,
+                  const struct key_events *input)
 {
-    static xOffset = 0;
-    static yOffset = 0;
-    xOffset++;
-    yOffset++;
+    static int xOffset = 0;
+    static int yOffset = 0;
+    for(int i = 0; i < input->len; i++) {
+        switch(input->codes[i]) {
+        case KEY_A:
+            xOffset--;
+            break;
+        case KEY_D:
+            xOffset++;
+            break;
+        case KEY_W:
+            yOffset--;
+            break;
+        case KEY_S:
+            yOffset++;
+            break;
+        default:
+            break;
+        }
+    }
     render_gradient(buf, xOffset, yOffset);
 }

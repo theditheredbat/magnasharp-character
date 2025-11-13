@@ -107,12 +107,18 @@ WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdLine, int cmdShow)
         g_running = 1;
         HDC deviceContext = GetDC(windowHandle);
         while(g_running) {
+            struct key_events input = {0};
             MSG msg;
             while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                if(msg.message == WM_KEYDOWN) {
+                    input.codes[input.len++] = msg.wParam;
+                }
+                else {
+                    TranslateMessage(&msg);
+                    DispatchMessage(&msg);
+                }
             }
-            update_and_render(&buf);
+            update_and_render(&buf, &input);
             RECT clientRect;
             GetClientRect(windowHandle, &clientRect);
             win32_display_buffer(deviceContext, &clientRect);
