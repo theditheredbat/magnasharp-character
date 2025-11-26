@@ -1,3 +1,3 @@
-default:
+all:
 	cd out
-	cl ../src/magnasharp.c ../src/win32_entry.c User32.lib Gdi32.lib -Zi -FC -Fe:char
+	clang ../src/magnasharp.c ../src/win32_entry.c ../src/win32_fileio.c -o char.exe -g -Werror -fdiagnostics-absolute-paths -lUser32.lib -lGdi32.lib

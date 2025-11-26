@@ -1,7 +1,8 @@
 #include <Windows.h>
 
+#include "application.h"
+#include "fileio.h"
 #include "platform.h"
-#include "magnasharp.h"
 
 struct win32_back_buffer {
     int width, height;
@@ -104,13 +105,14 @@ WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdLine, int cmdShow)
                                        0);
 
     if(windowHandle) {
+        app_init();
         g_running = 1;
         HDC deviceContext = GetDC(windowHandle);
         while(g_running) {
             struct key_events input = {0};
             MSG msg;
             while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
-                if(msg.message == WM_KEYDOWN) {
+                if(msg.message == WM_KEYDOWN && input.len < 50) {
                     input.codes[input.len++] = msg.wParam;
                 }
                 else {
@@ -118,7 +120,7 @@ WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdLine, int cmdShow)
                     DispatchMessage(&msg);
                 }
             }
-            update_and_render(&buf, &input);
+            app_update_and_render(&buf, &input);
             RECT clientRect;
             GetClientRect(windowHandle, &clientRect);
             win32_display_buffer(deviceContext, &clientRect);

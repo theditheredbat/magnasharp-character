@@ -17,9 +17,16 @@ render_gradient(struct back_buffer *buf, int xOffset, int yOffset)
     }
 }
 
+// Maybe don't use this method?
 void
-update_and_render(struct back_buffer *buf,
-                  const struct key_events *input)
+app_init(void)
+{
+    // Load Font
+}
+
+void
+app_update_and_render(struct back_buffer *buf,
+                      const struct key_events *input)
 {
     static int xOffset = 0;
     static int yOffset = 0;
