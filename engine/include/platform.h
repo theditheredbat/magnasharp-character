@@ -3,12 +3,6 @@
 
 #define internal static
 
-struct back_buffer {
-    void *memory;
-    int height;
-    int width;
-};
-
 enum key_code {
     KEY_A = 'A',
     KEY_B,

@@ -1,6 +1,6 @@
 #include <Windows.h>
 
-#include "fileio.h"
+#include <fileio.h>
 
 struct file_content
 platform_get_file_content(const char *path)
