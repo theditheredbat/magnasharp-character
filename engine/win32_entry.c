@@ -5,13 +5,51 @@
 #include "fileio.h"
 #include "platform.h"
 
+internal void
+create_opengl_context(HWND hwnd, HDC dev_context)
+{
 #define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
 #define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
 #define WGL_CONTEXT_PROFILE_MASK_ARB            0x9126
 #define WGL_CONTEXT_CORE_PROFILE_BIT_ARB        0x00000001
 
-typedef HGLRC WINAPI CREATECONTEXTATTRIBPROC(HDC hdc, HGLRC hShareContext, const int *attribList);
-CREATECONTEXTATTRIBPROC *wglCreateContextAttribsARB;
+    typedef HGLRC WINAPI (*PFNCREATECONTEXTATTRIBPROC)(HDC hdc, HGLRC hShareContext, const int *attribList);
+    PFNCREATECONTEXTATTRIBPROC wglCreateContextAttribsARB;
+
+    PIXELFORMATDESCRIPTOR pform = {
+        .nSize = sizeof(PIXELFORMATDESCRIPTOR),
+        .nVersion = 1,
+        .dwFlags = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW,
+        .iPixelType = PFD_TYPE_RGBA,
+        .cColorBits = 32,
+        .cAlphaBits = 24,
+        .cAccumBits = 8,
+        .iLayerType = PFD_MAIN_PLANE
+    };
+    int formnum = ChoosePixelFormat(dev_context, &pform); // Check for zero
+    SetPixelFormat(dev_context, formnum, &pform);
+    HGLRC dummy_context = wglCreateContext(dev_context);
+    wglMakeCurrent(dev_context, dummy_context);
+
+    int attribs[] = {
+        WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+        WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+        0
+    };
+    wglCreateContextAttribsARB = (PFNCREATECONTEXTATTRIBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+
+    HGLRC cool_context = wglCreateContextAttribsARB(dev_context, 0, attribs);
+    wglMakeCurrent(dev_context, cool_context);
+    wglDeleteContext(dummy_context);
+
+    gladLoadGLLoader((GLADloadproc)wglGetProcAddress);
+
+#undef WGL_CONTEXT_MAJOR_VERSION_ARB
+#undef WGL_CONTEXT_MINOR_VERSION_ARB
+#undef WGL_CONTEXT_PROFILE_MASK_ARB
+#undef WGL_CONTEXT_CORE_PROFILE_BIT_ARB
+}
 
 internal int g_running;
 
@@ -34,17 +72,16 @@ win32_window_callback(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 int WINAPI
 WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdLine, int cmdShow)
 {
-    WNDCLASS windowClass = {
+    WNDCLASS window_class = {
         .style = CS_OWNDC | CS_VREDRAW | CS_VREDRAW,
         .lpfnWndProc = win32_window_callback,
         .hInstance = hInst,
         .lpszClassName = "win32WindowClass",
     };
+    RegisterClass(&window_class);
 
-    RegisterClass(&windowClass);
-
-    HWND windowHandle = CreateWindowEx(0,
-                                       windowClass.lpszClassName,
+    HWND window_handle = CreateWindowEx(0,
+                                       window_class.lpszClassName,
                                        "char",
                                        WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                                        CW_USEDEFAULT,
@@ -55,36 +92,11 @@ WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdLine, int cmdShow)
                                        0,
                                        hInst,
                                        0);
-    if(!windowHandle)
+    if(!window_handle)
         return (-1);
-    // Separate code into functions
+    HDC dev_context = GetDC(window_handle);
+    create_opengl_context(window_handle, dev_context);
     g_running = 1;
-    HDC deviceContext = GetDC(windowHandle);
-    PIXELFORMATDESCRIPTOR pform = {
-        .nSize = sizeof(PIXELFORMATDESCRIPTOR),
-        .nVersion = 1,
-        .dwFlags = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW,
-        .iPixelType = PFD_TYPE_RGBA,
-        .cColorBits = 32,
-        .cAlphaBits = 24,
-        .cAccumBits = 8,
-        .iLayerType = PFD_MAIN_PLANE
-    };
-    int formnum = ChoosePixelFormat(deviceContext, &pform); // Check for zero
-    SetPixelFormat(deviceContext, formnum, &pform);
-    HGLRC tempGLContext = wglCreateContext(deviceContext);
-    wglMakeCurrent(deviceContext, tempGLContext);
-    int attribs[] = {
-        WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-        WGL_CONTEXT_MINOR_VERSION_ARB, 3,
-        WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-        0
-    };
-    wglCreateContextAttribsARB = (CREATECONTEXTATTRIBPROC *)wglGetProcAddress("wglCreateContextAttribsARB");
-    gladLoadGLLoader((GLADloadproc)wglGetProcAddress);
-    HGLRC glContext = wglCreateContextAttribsARB(deviceContext, 0, attribs);
-    wglMakeCurrent(deviceContext, glContext);
-    wglDeleteContext(tempGLContext);
     while(g_running) {
         struct key_events input = {0};
         MSG msg;
@@ -98,7 +110,7 @@ WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdLine, int cmdShow)
             }
         }
         app_update_and_render(&input);
-        SwapBuffers(deviceContext);
+        SwapBuffers(dev_context);
     }
 
     return (0);

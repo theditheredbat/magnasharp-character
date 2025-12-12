@@ -1,35 +1,35 @@
 #include <Windows.h>
 
-#include <fileio.h>
+#include "fileio.h"
 
 struct file_content
 platform_get_file_content(const char *path)
 {
     struct file_content res = {0};
-    HANDLE fileHandle = CreateFile(path,
+    HANDLE hfile = CreateFile(path,
                                    GENERIC_READ,
                                    FILE_SHARE_READ,
                                    0,
                                    OPEN_EXISTING,
                                    FILE_ATTRIBUTE_NORMAL,
                                    0);
-    LARGE_INTEGER fileSize = {0};
-    GetFileSizeEx(fileHandle, &fileSize);
+    LARGE_INTEGER file_size = {0};
+    GetFileSizeEx(hfile, &file_size);
     res.mem = HeapAlloc(GetProcessHeap(),
                         0,
-                        fileSize.QuadPart);
+                        file_size.QuadPart);
     if(res.mem) {
-        DWORD bytesRead = 0;
-        ReadFile(fileHandle, res.mem,
-                 fileSize.QuadPart, &bytesRead,
+        DWORD nbytes = 0;
+        ReadFile(hfile, res.mem,
+                 file_size.QuadPart, &nbytes,
                  0);
-        if(fileSize.QuadPart != bytesRead) {
+        if(file_size.QuadPart != nbytes) {
             HeapFree(GetProcessHeap(), 0, res.mem);
             res.mem = 0;
         }
     }
-    CloseHandle(fileHandle);
-    res.len = fileSize.QuadPart;
+    CloseHandle(hfile);
+    res.len = file_size.QuadPart;
     return (res);
 }
 
