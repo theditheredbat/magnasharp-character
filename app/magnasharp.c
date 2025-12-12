@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 
+#include "fileio.h"
 #include "platform.h"
 
 // Move OpenGL code to renderer in engine
@@ -27,18 +28,11 @@ app_update_and_render(const struct key_events *input)
 
     unsigned int shader_program = glCreateProgram();
 
-    const char *vertsrc = "#version 330 core\n\n"
-        "layout(location = 0) in vec3 aPos;\n"
-        "void main() {\n"
-        "    gl_Position = vec4(aPos, 1.0f);\n"
-        "}\0";
-
-    const char *fragsrc = "#version 330 core\n\n"
-        "out vec4 FragColor;\n"
-        "void main() {\n"
-        "    FragColor = vec4(0.9f, 0.5f, 0.1f, 1.0f);\n"
-        "}\0";
-
+    struct file_content frag_file = platform_get_file_content("../app/temp.frag");
+    struct file_content vert_file = platform_get_file_content("../app/temp.vert");
+    const char *fragsrc = frag_file.mem;
+    const char *vertsrc = vert_file.mem;
+    
     unsigned int frag_shader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(frag_shader, 1, &fragsrc, NULL);
     glCompileShader(frag_shader);
@@ -46,6 +40,9 @@ app_update_and_render(const struct key_events *input)
     unsigned int vert_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vert_shader, 1, &vertsrc, NULL);
     glCompileShader(vert_shader);
+
+    platform_free_file_memory(&frag_file);
+    platform_free_file_memory(&vert_file);
 
     glAttachShader(shader_program, vert_shader);
     glAttachShader(shader_program, frag_shader);

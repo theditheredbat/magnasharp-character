@@ -17,19 +17,20 @@ platform_get_file_content(const char *path)
     GetFileSizeEx(hfile, &file_size);
     res.mem = HeapAlloc(GetProcessHeap(),
                         0,
-                        file_size.QuadPart);
+                        file_size.QuadPart - 1);
     if(res.mem) {
         DWORD nbytes = 0;
         ReadFile(hfile, res.mem,
-                 file_size.QuadPart, &nbytes,
+                 file_size.QuadPart - 2, &nbytes,
                  0);
-        if(file_size.QuadPart != nbytes) {
+        if((file_size.QuadPart - 2) != nbytes) {
             HeapFree(GetProcessHeap(), 0, res.mem);
             res.mem = 0;
         }
     }
     CloseHandle(hfile);
-    res.len = file_size.QuadPart;
+    res.len = file_size.QuadPart - 2;
+    res.mem[file_size.QuadPart - 2] = '\0';
     return (res);
 }
 
