@@ -23,6 +23,11 @@ main(void)
     while(file.mem[i])
         printf("%c", file.mem[i++]);
 
+    char *ch = file.mem;
+    while(*ch) {
+        printf("%c", *ch++);
+    }
+
     platform_free_file_memory(&file);
     
     return (0);

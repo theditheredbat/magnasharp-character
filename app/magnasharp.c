@@ -3,10 +3,18 @@
 #include "fileio.h"
 #include "platform.h"
 
-// Move OpenGL code to renderer in engine
+// Here for testing purposes only
+// TODO: Remove
+#include <stdio.h>
+#include "font.h"
+
+// TODO: Move OpenGL code to renderer in engine
 void
 app_update_and_render(const struct key_events *input)
 {
+    struct font_bitmap cherry = load_bdf("../assets/cherry-10-r.bdf");
+    printf("%d\n", cherry.size);
+
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
 
     const float vertices[9] = {
